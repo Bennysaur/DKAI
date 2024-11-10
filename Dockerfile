@@ -70,5 +70,5 @@ FROM base as final
 # Copy models from stage 2 to the final image
 COPY --from=downloader /comfyui/models /comfyui/models
 # Start the container
-CMD /start.sh
+CMD sh -c "ln -sf /runpod-volume/custom_nodes/* /comfyui/custom_nodes && ln -sf /runpod-volume/models/* /comfyui/models && /start.sh"
 # xoxo
