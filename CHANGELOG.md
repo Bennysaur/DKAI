@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/Bennysaur/DKAI/compare/1.1.2...1.1.3) (2024-11-10)
+
+
+### Bug Fixes
+
+* Update Dockerfile ([fae1e71](https://github.com/Bennysaur/DKAI/commit/fae1e7149192928176280e17709727a8a31129b7))
+
 ## [1.1.2](https://github.com/Bennysaur/DKAI/compare/1.1.1...1.1.2) (2024-11-10)
 
 
