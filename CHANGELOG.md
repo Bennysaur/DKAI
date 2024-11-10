@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Bennysaur/DKAI/compare/1.0.0...1.1.0) (2024-11-10)
+
+
+### Features
+
+* add support for custom node requirements ([800a566](https://github.com/Bennysaur/DKAI/commit/800a566e5950f8e8e683df65494b3859a2a26143))
+
 # 1.0.0 (2024-11-10)
 
 
