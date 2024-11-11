@@ -26,11 +26,12 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
 WORKDIR /comfyui
 
 # Install ComfyUI dependencies
-RUN pip3 install --upgrade --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+RUN pip3 install --upgrade pip && \
+    pip3 install --upgrade --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
     pip3 install --upgrade -r requirements.txt && \
     pip3 install runpod requests
 
-# Pre-install all custom node dependencies
+# Pre-install ALL dependencies including previously missing ones
 RUN pip3 install --no-cache-dir \
     opencv-python-headless \
     "rembg[gpu]" \
@@ -52,29 +53,33 @@ RUN pip3 install --no-cache-dir \
     einops \
     timm \
     open_clip_torch \
-    ultralytics
+    ultralytics \
+    openai \
+    blend_modes \
+    pyOpenSSL \
+    GitPython \
+    flask \
+    lark-parser
 
-# Clone essential custom nodes
+# Add custom nodes before ComfyUI setup
 WORKDIR /comfyui/custom_nodes
 RUN git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
     git clone https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git && \
     git clone https://github.com/WASasquatch/was-node-suite-comfyui.git && \
-    git clone https://github.com/EllangoK/ComfyUI-post-processing-nodes.git && \
     git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git && \
     git clone https://github.com/cubiq/ComfyUI_IPAdapter_plus.git && \
     git clone https://github.com/sipherxyz/comfyui-art-venture.git && \
     git clone https://github.com/jamesWalker55/comfyui-various.git && \
     git clone https://github.com/Extraltodeus/ComfyUI-AutomaticCFG.git && \
-    git clone https://github.com/Acly/comfyui-inpaint-nodes.git && \
     git clone https://github.com/spacepxl/ComfyUI-Image-Filters.git && \
     git clone https://github.com/cubiq/ComfyUI_essentials.git && \
     git clone https://github.com/kijai/ComfyUI-KJNodes.git && \
     git clone https://github.com/chflame163/ComfyUI_LayerStyle.git && \
-    git clone https://github.com/shadowcz007/comfyui-mixlab-nodes.git && \
     git clone https://github.com/natto-maki/ComfyUI-NegiTools.git && \
-    git clone https://github.com/yolain/ComfyUI-Easy-Use.git && \
-    git clone https://github.com/digitaljohn/comfyui-propost.git && \
-    git clone https://github.com/SuperBeastsAI/ComfyUI-SuperBeasts.git
+    git clone https://github.com/yolain/ComfyUI-Easy-Use.git
+
+# Install any requirements from custom nodes
+RUN find . -name "requirements.txt" -exec pip3 install -r {} \;
 
 # Add volume support files
 WORKDIR /comfyui
@@ -85,5 +90,16 @@ WORKDIR /
 ADD src/start.sh src/rp_handler.py test_input.json ./
 RUN chmod +x /start.sh
 
-# Modified CMD to handle both pre-installed and network volume nodes
-CMD sh -c "if [ -d /runpod-volume/custom_nodes ]; then cp -rf /runpod-volume/custom_nodes/* /comfyui/custom_nodes/ 2>/dev/null || true; fi && if [ -d /runpod-volume/models ]; then cp -rf /runpod-volume/models/* /comfyui/models/ 2>/dev/null || true; fi && /start.sh"
+# Create a wrapper script to handle startup
+RUN echo '#!/bin/bash\n\
+if [ -d /runpod-volume/custom_nodes ]; then\n\
+  cp -rf /runpod-volume/custom_nodes/* /comfyui/custom_nodes/ 2>/dev/null || true\n\
+fi\n\
+if [ -d /runpod-volume/models ]; then\n\
+  cp -rf /runpod-volume/models/* /comfyui/models/ 2>/dev/null || true\n\
+fi\n\
+python3 -u /comfyui/main.py --listen 0.0.0.0 --port 8188 & \n\
+sleep 5\n\
+/start.sh' > /start_wrapper.sh && chmod +x /start_wrapper.sh
+
+CMD ["/start_wrapper.sh"]
