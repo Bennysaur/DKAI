@@ -1,5 +1,14 @@
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 AS base
 
+# Clean up space first
+RUN rm -rf /usr/share/dotnet && \
+    rm -rf /usr/local/lib/android && \
+    rm -rf /opt/ghc && \
+    rm -rf "/usr/local/share/boost" && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /root/.cache/pip
+
 # Environment setup
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_PREFER_BINARY=1 \
@@ -28,8 +37,11 @@ RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /comfyui &
     mkdir -p /comfyui/custom_nodes /comfyui/models && \
     cd /comfyui && \
     pip3 install --no-cache-dir --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir --upgrade -r requirements.txt && \
+    rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir runpod requests && \
+    rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir \
     opencv-contrib-python \
     "rembg[gpu]" \
@@ -51,7 +63,8 @@ RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /comfyui &
     python-dotenv \
     fal-serverless \
     clip-interrogator==0.6.0 && \
-    rm -rf /root/.cache/pip
+    rm -rf /root/.cache/pip && \
+    rm -rf /comfyui/.git
 
 # Setup custom nodes in one layer with cleanup
 WORKDIR /comfyui/custom_nodes
@@ -84,12 +97,14 @@ RUN for repo in \
     do \
         name=$(basename "$repo" .git); \
         echo "Installing $name..." && \
-        git clone --depth=1 "$repo" || \
-        echo "Failed to clone $name, continuing..."; \
+        git clone --depth=1 "$repo" "$name" || \
+        echo "Failed to clone $name, continuing..." && \
+        rm -rf "${name}/.git" || true; \
     done && \
     find . -name "requirements.txt" -exec pip3 install --no-cache-dir -r {} \; && \
     find . -name ".git" -type d -exec rm -rf {} + || true && \
-    rm -rf /root/.cache/pip
+    rm -rf /root/.cache/pip && \
+    rm -rf /tmp/* /var/tmp/*
 
 # Setup start script
 WORKDIR /comfyui
