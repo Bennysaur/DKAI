@@ -12,12 +12,15 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     git \
     wget \
-    # Required for OpenCV
+    # Required for OpenCV and other image processing
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    libgl1-mesa-glx
+    libgl1-mesa-glx \
+    # Additional dependencies
+    libglib2.0-0 \
+    libgl1
 
 # Clean up to reduce image size
 RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
@@ -39,9 +42,24 @@ RUN pip3 install --no-cache-dir \
     docopt \
     hydra-core \
     opencv-python \
+    "rembg[gpu]" \
     openai \
     matplotlib \
-    lark-parser
+    lark-parser \
+    scikit-image \
+    pymatting \
+    accelerate \
+    webcolors \
+    diffusers \
+    transformers \
+    pytorch_lightning \
+    controlnet-aux \
+    mediapipe \
+    ultralytics \
+    tensorflow \
+    timm \
+    einops \
+    safetensors
 
 # Support for the network volume
 ADD src/extra_model_paths.yaml ./
