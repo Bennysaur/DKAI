@@ -6,8 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     SERVE_API_LOCALLY=false
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies and clean up in one layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.10 \
     python3-pip \
     git \
@@ -19,11 +19,12 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libgl1-mesa-glx \
     ffmpeg && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     pip3 install --no-cache-dir --upgrade pip
 
-# Setup ComfyUI and dependencies in one layer
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
+# Setup ComfyUI and dependencies in one layer with cleanup
+RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
     mkdir -p /comfyui/custom_nodes /comfyui/models && \
     cd /comfyui && \
     pip3 install --no-cache-dir --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
@@ -49,9 +50,10 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
     imageio-ffmpeg \
     python-dotenv \
     fal-serverless \
-    clip-interrogator==0.6.0
+    clip-interrogator==0.6.0 && \
+    rm -rf /root/.cache/pip
 
-# Setup custom nodes in one layer
+# Setup custom nodes in one layer with cleanup
 WORKDIR /comfyui/custom_nodes
 RUN for repo in \
     "https://github.com/ltdrdata/ComfyUI-Manager.git" \
@@ -85,7 +87,9 @@ RUN for repo in \
         git clone --depth=1 "$repo" || \
         echo "Failed to clone $name, continuing..."; \
     done && \
-    find . -name "requirements.txt" -exec pip3 install --no-cache-dir -r {} \;
+    find . -name "requirements.txt" -exec pip3 install --no-cache-dir -r {} \; && \
+    find . -name ".git" -type d -exec rm -rf {} + || true && \
+    rm -rf /root/.cache/pip
 
 # Setup start script
 WORKDIR /comfyui
