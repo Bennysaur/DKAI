@@ -52,23 +52,48 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
     fal-serverless \
     clip-interrogator==0.6.0
 
-# Setup custom nodes in one layer
+# Setup custom nodes in one layer with error handling
 WORKDIR /comfyui/custom_nodes
-RUN git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
-    git clone https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git && \
-    git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git && \
-    git clone https://github.com/chflame163/ComfyUI_LayerStyle.git && \
-    git clone https://github.com/crystian/ComfyUI-ProPost.git comfyui-propost && \
-    git clone https://github.com/laksjdjf/ComfyUI-NegiTools.git && \
-    git clone https://github.com/thecooltechguy/ComfyUI-ChatGPT.git && \
-    git clone https://github.com/Gourieff/comfyui-reactor-node.git && \
-    git clone https://github.com/Fannovel16/comfyui-video-helper.git && \
-    git clone https://github.com/Kosinkadink/ComfyUI-AnimateDiff-Evolved.git && \
-    git clone https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet.git && \
-    git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && \
-    git clone https://github.com/Fannovel16/ComfyUI-Video-Matting.git && \
-    git clone https://github.com/melMass/comfyui-optimizations.git && \
-    find . -name "requirements.txt" -exec pip3 install --no-cache-dir -r {} \;
+RUN set -e; \
+    declare -A repos=( \
+        ["ComfyUI-Manager"]="https://github.com/ltdrdata/ComfyUI-Manager.git" \
+        ["ComfyUI-Inspire-Pack"]="https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git" \
+        ["was-node-suite-comfyui"]="https://github.com/WASasquatch/was-node-suite-comfyui.git" \
+        ["ComfyUI-post-processing-nodes"]="https://github.com/EllangoK/ComfyUI-post-processing-nodes.git" \
+        ["ComfyUI_Comfyroll_CustomNodes"]="https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git" \
+        ["ComfyUI_IPAdapter_plus"]="https://github.com/cubiq/ComfyUI_IPAdapter_plus.git" \
+        ["comfyui-art-venture"]="https://github.com/sipherxyz/comfyui-art-venture.git" \
+        ["comfyui-various"]="https://github.com/jamesWalker55/comfyui-various.git" \
+        ["ComfyUI-AutomaticCFG"]="https://github.com/Extraltodeus/ComfyUI-AutomaticCFG.git" \
+        ["comfyui-inpaint-nodes"]="https://github.com/Acly/comfyui-inpaint-nodes.git" \
+        ["ComfyUI-Image-Filters"]="https://github.com/spacepxl/ComfyUI-Image-Filters.git" \
+        ["ComfyUI_essentials"]="https://github.com/cubiq/ComfyUI_essentials.git" \
+        ["ComfyUI-KJNodes"]="https://github.com/kijai/ComfyUI-KJNodes.git" \
+        ["ComfyUI-IC-Light"]="https://github.com/kijai/ComfyUI-IC-Light.git" \
+        ["ComfyUI-DepthAnythingV2"]="https://github.com/kijai/ComfyUI-DepthAnythingV2.git" \
+        ["save-image-extended-comfyui"]="https://github.com/audioscavenger/save-image-extended-comfyui.git" \
+        ["ComfyUI_LayerStyle"]="https://github.com/chflame163/ComfyUI_LayerStyle.git" \
+        ["comfyui-mixlab-nodes"]="https://github.com/shadowcz007/comfyui-mixlab-nodes.git" \
+        ["ComfyUI-NegiTools"]="https://github.com/natto-maki/ComfyUI-NegiTools.git" \
+        ["ComfyUI-Easy-Use"]="https://github.com/yolain/ComfyUI-Easy-Use.git" \
+        ["comfyui-propost"]="https://github.com/digitaljohn/comfyui-propost.git" \
+        ["ComfyUI-IC-Light-Native"]="https://github.com/huchenlei/ComfyUI-IC-Light-Native.git" \
+        ["ComfyUI-SuperBeasts"]="https://github.com/SuperBeastsAI/ComfyUI-SuperBeasts.git" \
+        ["ComfyUI-ResAdapter"]="https://github.com/jiaxiangc/ComfyUI-ResAdapter.git" \
+        ["comfyui-saveimage-plus"]="https://github.com/Goktug/comfyui-saveimage-plus.git" \
+    ); \
+    for name in "${!repos[@]}"; do \
+        echo "Installing ${name}..." && \
+        git clone --depth=1 "${repos[$name]}" "$name" || \
+        echo "Failed to clone ${name}, continuing..."; \
+    done && \
+    for dir in */; do \
+        if [ -f "${dir}requirements.txt" ]; then \
+            echo "Installing requirements for ${dir}..." && \
+            pip3 install --no-cache-dir -r "${dir}requirements.txt" || \
+            echo "Failed to install requirements for ${dir}, continuing..."; \
+        fi \
+    done
 
 # Setup start script
 WORKDIR /comfyui
