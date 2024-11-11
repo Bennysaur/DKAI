@@ -69,6 +69,29 @@ RUN if [ "$MODEL_TYPE" = "sdxl" ]; then \
 FROM base as final
 # Copy models from stage 2 to the final image
 COPY --from=downloader /comfyui/models /comfyui/models
-# Start the container
-CMD sh -c "mkdir -p /comfyui/custom_nodes /comfyui/models && ls -l /comfyui/models && ln -sfn /runpod-volume/custom_nodes/* /comfyui/custom_nodes && ln -sfn /runpod-volume/models/* /comfyui/models && ls -l /comfyui/models && /start.sh"
-# xoxo
+
+# Create directories and setup mounts
+RUN mkdir -p /comfyui/custom_nodes /comfyui/models
+
+# Start the container with proper linking
+CMD sh -c '\
+    echo "Setting up directories..." && \
+    mkdir -p /comfyui/custom_nodes /comfyui/models && \
+    echo "Before linking models:" && \
+    ls -la /comfyui/models && \
+    echo "Before linking custom_nodes:" && \
+    ls -la /comfyui/custom_nodes && \
+    echo "RunPod volume contents:" && \
+    ls -la /runpod-volume && \
+    echo "Linking nodes and models..." && \
+    if [ -d "/runpod-volume/custom_nodes" ]; then \
+        cp -rf /runpod-volume/custom_nodes/* /comfyui/custom_nodes/ || true; \
+    fi && \
+    if [ -d "/runpod-volume/models" ]; then \
+        cp -rf /runpod-volume/models/* /comfyui/models/ || true; \
+    fi && \
+    echo "After linking:" && \
+    ls -la /comfyui/custom_nodes && \
+    ls -la /comfyui/models && \
+    echo "Starting ComfyUI..." && \
+    /start.sh'
