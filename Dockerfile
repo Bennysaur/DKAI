@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     git \
     wget \
+    curl \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
@@ -78,18 +79,20 @@ start_comfyui() {\n\
     local pid=$!\n\
     echo "ComfyUI started with PID $pid"\n\
     \n\
-    # Wait for server to be ready\n\
+    # Wait for server to be ready using wget instead of curl\n\
     echo "Waiting for ComfyUI to be ready..."\n\
     for i in {1..30}; do\n\
-      if curl -s http://127.0.0.1:$port > /dev/null; then\n\
+      if wget -q --spider http://127.0.0.1:$port; then\n\
         echo "ComfyUI is ready!"\n\
         break\n\
       fi\n\
       if [ $i -eq 30 ]; then\n\
         echo "ComfyUI failed to start"\n\
+        kill -9 $pid\n\
         exit 1\n\
       fi\n\
-      sleep 1\n\
+      echo "Attempt $i: Waiting for ComfyUI..."\n\
+      sleep 2\n\
     done\n\
     \n\
     # Start RunPod handler\n\
