@@ -11,7 +11,14 @@ RUN apt-get update && apt-get install -y \
     python3.10 \
     python3-pip \
     git \
-    wget
+    wget \
+    # Required for OpenCV
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1-mesa-glx
+
 # Clean up to reduce image size
 RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 # Clone ComfyUI repository
@@ -30,7 +37,11 @@ RUN pip3 install --no-cache-dir \
     "qrcode[pil]" \
     segment_anything \
     docopt \
-    hydra-core
+    hydra-core \
+    opencv-python \
+    openai \
+    matplotlib \
+    lark-parser
 
 # Support for the network volume
 ADD src/extra_model_paths.yaml ./
