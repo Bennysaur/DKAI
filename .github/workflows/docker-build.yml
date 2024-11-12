@@ -7,6 +7,8 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 120  # 2 hour timeout
+
     steps:
       - name: Free disk space
         run: |
@@ -35,6 +37,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Build and push
+        id: docker_build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -44,13 +47,9 @@ jobs:
           cache-to: type=registry,ref=elydk/runpod-worker-comfy:buildcache,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
-          outputs: type=docker,dest=/tmp/image.tar
+          outputs: type=docker
+          provenance: false
+          no-cache: true  # Force a clean build
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: docker-image
-          path: /tmp/image.tar
