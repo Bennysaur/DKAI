@@ -1,19 +1,37 @@
+# Stage 1: Base image with system dependencies
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 AS base
-
-# Clean up space first
-RUN rm -rf /usr/share/dotnet && \
-    rm -rf /usr/local/lib/android && \
-    rm -rf /opt/ghc && \
-    rm -rf "/usr/local/share/boost" && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /root/.cache/pip
 
 # Environment setup
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_PREFER_BINARY=1 \
     PYTHONUNBUFFERED=1 \
-    SERVE_API_LOCALLY=false
+    SERVE_API_LOCALLY=false \
+    PIP_ROOT_USER_ACTION=ignore
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3-pip \
+    git \
+    wget \
+    curl \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1-mesa-glx \
+    ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip3 install --no-cache-dir --upgrade pip
+
+# Stage 2: Build stage
+FROM base AS builder
+
+# Install Python dependencies
+COPY requirements.txt /tmp/
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+    rm -rf /root/.cache/pip
 
 # Install system dependencies and clean up in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
