@@ -54,18 +54,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
     mkdir -p /comfyui/custom_nodes /comfyui/models && \
     cd /comfyui && \
-    # Install specific PyTorch version first
+    # Install PyTorch first
     pip3 install --no-cache-dir torch==2.1.2 torchvision==0.16.2 --extra-index-url https://download.pytorch.org/whl/cu118 && \
     rm -rf /root/.cache/pip && \
+    # Uninstall any existing OpenCV packages
+    pip3 uninstall -y opencv-python opencv-python-headless opencv-contrib-python && \
+    # Install OpenCV contrib specifically
+    pip3 install --no-cache-dir opencv-contrib-python==4.8.1.78 && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        libsm6 \
+        libxext6 \
+        libxrender-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /root/.cache/pip && \
+    # Continue with other installations
     pip3 install --no-cache-dir --upgrade -r requirements.txt && \
     rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir runpod requests && \
     rm -rf /root/.cache/pip && \
-    # Install specific xformers version
     pip3 install --no-cache-dir xformers==0.0.23.post1 && \
     rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir \
-    opencv-contrib-python \
     "rembg[gpu]" \
     scikit-image \
     webcolors \
@@ -98,6 +110,7 @@ RUN for repo in \
     "https://github.com/cubiq/ComfyUI_IPAdapter_plus.git" \
     "https://github.com/sipherxyz/comfyui-art-venture.git" \
     "https://github.com/jamesWalker55/comfyui-various.git" \
+    "https://github.com/JPS-GER/ComfyUI_JPS-Nodes.git" \
     "https://github.com/Extraltodeus/ComfyUI-AutomaticCFG.git" \
     "https://github.com/Acly/comfyui-inpaint-nodes.git" \
     "https://github.com/spacepxl/ComfyUI-Image-Filters.git" \
