@@ -7,19 +7,41 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    timeout-minutes: 120  # 2 hour timeout
+    timeout-minutes: 120
 
     steps:
       - name: Free disk space
         run: |
+          # Show initial disk space
           df -h
-          sudo rm -rf /usr/share/dotnet
+          
+          # Remove large unnecessary files
           sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf /usr/local/share/boost
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          
+          # Clean package manager
           sudo apt-get clean
-          docker system prune -a -f
+          sudo apt-get autoremove -y
+          sudo apt-get autoclean -y
+          
+          # Clean Docker system
+          docker system prune -a -f --volumes
+          docker image prune -a -f
+          docker builder prune -a -f
+          
+          # Remove swap file
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          
+          # Clean temp directories
+          sudo rm -rf /tmp/*
+          sudo rm -rf /var/tmp/*
+          sudo rm -rf /var/cache/*
+          
+          # Show freed space
           df -h
 
       - name: Checkout
@@ -28,6 +50,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
           buildkitd-flags: --debug
       
       - name: Login to Docker Hub
@@ -37,19 +62,18 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Build and push
-        id: docker_build
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: elydk/runpod-worker-comfy:latest
-          cache-from: type=registry,ref=elydk/runpod-worker-comfy:buildcache
-          cache-to: type=registry,ref=elydk/runpod-worker-comfy:buildcache,mode=max
+          platforms: linux/amd64
+          provenance: false
+          no-cache: true
           build-args: |
             BUILDKIT_INLINE_CACHE=1
-          outputs: type=docker
-          provenance: false
-          no-cache: true  # Force a clean build
-
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+          outputs: type=registry
+          allow: |
+            network.host
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
