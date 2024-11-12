@@ -102,6 +102,7 @@ RUN for repo in \
     "https://github.com/Acly/comfyui-inpaint-nodes.git" \
     "https://github.com/spacepxl/ComfyUI-Image-Filters.git" \
     "https://github.com/cubiq/ComfyUI_essentials.git" \
+    "https://github.com/Derfuu/Derfuu_ComfyUI_ModdedNodes.git" \
     "https://github.com/kijai/ComfyUI-KJNodes.git" \
     "https://github.com/kijai/ComfyUI-IC-Light.git" \
     "https://github.com/kijai/ComfyUI-DepthAnythingV2.git" \
