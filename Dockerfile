@@ -50,15 +50,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/* && \
     pip3 install --no-cache-dir --upgrade pip
 
-# Setup ComfyUI and dependencies in one layer with cleanup
+# Clone ComfyUI
 RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
     mkdir -p /comfyui/custom_nodes /comfyui/models && \
     cd /comfyui && \
-    pip3 install --no-cache-dir --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    # Install specific PyTorch version first
+    pip3 install --no-cache-dir torch==2.1.2 torchvision==0.16.2 --extra-index-url https://download.pytorch.org/whl/cu118 && \
     rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir --upgrade -r requirements.txt && \
     rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir runpod requests && \
+    rm -rf /root/.cache/pip && \
+    # Install specific xformers version
+    pip3 install --no-cache-dir xformers==0.0.23.post1 && \
     rm -rf /root/.cache/pip && \
     pip3 install --no-cache-dir \
     opencv-contrib-python \
@@ -76,7 +80,6 @@ RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /comfyui &
     timm \
     colour-science \
     wget \
-    xformers \
     imageio-ffmpeg \
     python-dotenv \
     fal-serverless \
